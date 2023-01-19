@@ -1,20 +1,12 @@
 # mkinitfs
 
-This is the initramfs generator for Alpine Linux, including support for apk and 
-Alpine Diskless boot.
+This is the initramfs generator for desktop Android (/w GearLock recovery)
 
 ## Dependencies
 
 To compile manually, you need to have the following build tools available:
 
 - make
-- gcc with musl and kernel-headers
-
-nlplug-findfs will link against the following libraries (runtime deps):
-
-- libkmod
-- libblkid (from util-linux)
-- libcryptsetup
 
 ## Installation
 

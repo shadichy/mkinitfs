@@ -1,14 +1,22 @@
 
 VERSION		:= 3.7.0
 
-sbindir		?= /sbin
+sbindir		?= /bin
 sysconfdir	?= /etc/mkinitfs
+libdir		?= /lib
 datarootdir	?= /usr/share
 datadir		?= $(datarootdir)/mkinitfs
 mandir		?= $(datarootdir)/man
 
-SBIN_FILES	:= mkinitfs bootchartd nlplug-findfs/nlplug-findfs
-SHARE_FILES	:= initramfs-init fstab passwd group
+SBIN_FILES	:= mkinitfs bootchartd
+SHARE_FILES	:= initramfs-init passwd group
+LIB_FILES	:= scripts/00-ver \
+		scripts/0-auto-detect \
+		scripts/0-gearhook \
+		scripts/1-install \
+		scripts/2-mount \
+		scripts/3-tslib \
+		scripts/4-dpi
 CONF_FILES	:= mkinitfs.conf \
 		features.d/ata.modules \
 		features.d/base.files \
@@ -59,7 +67,7 @@ CONF_FILES	:= mkinitfs.conf \
 		features.d/dhcp.files \
 		features.d/dhcp.modules \
 		features.d/https.files
-MAN_FILES       := mkinitfs.1 mkinitfs-bootparam.7 nlplug-findfs.1
+MAN_FILES       := mkinitfs.1 mkinitfs-bootparam.7
 
 SCRIPTS		:= mkinitfs bootchartd initramfs-init
 IN_FILES	:= $(addsuffix .in,$(SCRIPTS) $(MAN_FILES))
@@ -81,13 +89,13 @@ SED_REPLACE	:= -e 's:@VERSION@:$(FULL_VERSION):g' \
 		-e 's:@sysconfdir@:$(sysconfdir):g' \
 		-e 's:@datadir@:$(datadir):g'
 
-DEFAULT_FEATURES ?= ata base cdrom ext4 keymap kms mmc nvme raid scsi usb virtio
+DEFAULT_FEATURES ?= ata base cdrom ext4 btrfs ntfs keymap kms mmc nvme raid scsi usb virtio
 ifeq ($(shell uname -m), s390x)
 DEFAULT_FEATURES += qeth dasd_mod zfcp
 endif
 
 
-all:	$(SBIN_FILES) $(SCRIPTS) $(CONF_FILES) $(MAN_FILES)
+all:	$(SBIN_FILES) $(SCRIPTS) $(LIB_FILES) $(CONF_FILES) $(MAN_FILES)
 
 clean:
 	rm -f $(SCRIPTS) $(MAN_FILES) mkinitfs.conf
@@ -96,34 +104,18 @@ help:
 	@echo mkinitfs $(VERSION)
 	@echo "usage: make install [DESTDIR=]"
 
-CFLAGS ?= -Wall -Werror -g
-CFLAGS += -D_GNU_SOURCE -DDEBUG
-
-PKGCONF		?= pkg-config
-BLKID_CFLAGS	:= $(shell $(PKGCONF) --cflags blkid)
-BLKID_LIBS	:= $(shell $(PKGCONF) --libs blkid)
-LIBKMOD_CFLAGS	:= $(shell $(PKGCONF) --cflags libkmod)
-LIBKMOD_LIBS	:= $(shell $(PKGCONF) --libs libkmod)
-CRYPTSETUP_CFLAGS := $(shell $(PKGCONF) --cflags libcryptsetup)
-CRYPTSETUP_LIBS	:= $(shell $(PKGCONF) --libs libcryptsetup)
-
-CFLAGS		+= $(BLKID_CFLAGS) $(LIBKMOD_CFLAGS) $(CRYPTSETUP_CFLAGS)
-LIBS		= $(BLKID_LIBS) $(LIBKMOD_LIBS) $(CRYPTSETUP_LIBS)
-
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
-
-nlplug-findfs/nlplug-findfs: nlplug-findfs/nlplug-findfs.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
 .SUFFIXES:	.in
 .in:
 	${SED} ${SED_REPLACE} ${SED_EXTRA} $< > $@
 
-install: $(SBIN_FILES) $(SHARE_FILES) $(CONF_FILES)
+install: $(SBIN_FILES) $(LIB_FILES) $(SHARE_FILES) $(CONF_FILES)
 	install -d -m755 $(DESTDIR)/$(sbindir)
 	for i in $(SBIN_FILES); do \
 		$(INSTALL) -Dm755 $$i $(DESTDIR)/$(sbindir)/;\
+	done
+	install -d -m755 $(DESTDIR)/$(libdir)
+	for i in $(LIB_FILES); do \
+		$(INSTALL) -Dm755 $$i $(DESTDIR)/$(libdir)/;\
 	done
 	for i in $(CONF_FILES); do \
 		$(INSTALL) -Dm644 $$i $(DESTDIR)/$(sysconfdir)/$$i;\

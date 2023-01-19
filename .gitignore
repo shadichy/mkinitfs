@@ -5,3 +5,4 @@ mkinitfs
 nlplug-findfs/nlplug-findfs
 *.[17]
 mkinitfs.conf
+.vscode
