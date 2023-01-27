@@ -3,7 +3,7 @@ VERSION		:= 3.7.0
 
 sbindir		?= /bin
 sysconfdir	?= /etc/mkinitfs
-libdir		?= /lib
+libdir		?= /lib/mkinitfs
 datarootdir	?= /usr/share
 datadir		?= $(datarootdir)/mkinitfs
 mandir		?= $(datarootdir)/man
@@ -115,7 +115,7 @@ install: $(SBIN_FILES) $(LIB_FILES) $(SHARE_FILES) $(CONF_FILES)
 	done
 	install -d -m755 $(DESTDIR)/$(libdir)
 	for i in $(LIB_FILES); do \
-		$(INSTALL) -Dm755 $$i $(DESTDIR)/$(libdir)/;\
+		$(INSTALL) -Dm755 $$i $(DESTDIR)/$(libdir)/$$i;\
 	done
 	for i in $(CONF_FILES); do \
 		$(INSTALL) -Dm644 $$i $(DESTDIR)/$(sysconfdir)/$$i;\
