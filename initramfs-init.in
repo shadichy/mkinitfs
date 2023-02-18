@@ -405,8 +405,8 @@ if [ "$ROOT" ]; then
 	check_root "$(find_mnt "$ROOT")" || launch_shell "ERROR: $ROOT is not a valid Android root filesystem, quitting..."
 else
 	echo -e "Detecting Android..."
-	for d in /dev/[hmnsv][dmrv][0-9a-z]* /dev/xvd[0-9a-z]* /dev/nvme0n[0-9]p[0-9a-z]* /dev/mmcblk[0-9]p[0-9a-z]*; do
-		check_root "$d" && break 2
+	for d in /dev/[hmnsv][dmrv][0-9a-z]* /dev/xvd[0-9a-z]* /dev/nvme[0-9]n[0-9]p[0-9a-z]* /dev/mmcblk[0-9]p[0-9a-z]*; do
+		[ -e "$d" ] && check_root "$d" && break 2
 	done
 	if [ -z "$ROOTFOUND" ]; then
 		[ "$INSTALL" ] && echo "ERROR: INSTALL specified but no install.img found!"

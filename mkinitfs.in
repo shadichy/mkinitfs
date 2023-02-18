@@ -22,10 +22,10 @@ feature_files() {
 			[ -f "$fdir/$f.$suffix" ] || continue
 			for glob in $(sed -e '/^$/d' -e '/^#/d' -e "s|^/*|$dir|" "$fdir/$f.$suffix"); do
 				for file in $glob; do
-					if [ -d $file ]; then
-						find $file -type f
+					if [ -d "$file" ]; then
+						find "$file" -type f
 					elif [ -e "$file" ]; then
-						echo $file
+						echo "$file"
 					fi
 				done
 			done
@@ -35,7 +35,7 @@ feature_files() {
 }
 
 initfs_base() {
-	local i= glob= file=
+	local i='' glob='' file=''
 	install -dm755 "$tmpdir"/{android,apex,hd,iso,proc,sys,dev,tmp,var,etc,usr/{local/{bin,lib},lib/{modules,firmware},bin},sfs,mnt}
 	ln -s "usr/lib" "$tmpdir/lib"
 	ln -s "bin"     "$tmpdir/usr/sbin"
@@ -103,14 +103,14 @@ find_kmods() {
 	local oldpwd="$PWD"
 	cd "$kerneldir" || return 1
 	for file in $(feature_files "${kerneldir}/" modules); do
-		echo ${file#${kerneldir%/}/}
+		echo "${file#"${kerneldir%/}"/}"
 	done | find_kmod_deps
 	cd "$oldpwd"
 }
 
 initfs_kmods() {
 	[ -z "$nokernel" ] || return 0
-	local glob= file= files= dirs=
+	local glob='' file='' files='' dirs=''
 	rm -rf "$tmpdir"/lib/modules
 	# make sure we have modules.dep
 	if ! [ -f "$kerneldir"/modules.dep ]; then
@@ -232,17 +232,17 @@ while getopts "b:c:C:f:F:hi:kKLlno:P:qs:t:" opt; do
 		*) usage;;
 	esac
 done
-shift $(( $OPTIND - 1 ))
+shift $(( OPTIND - 1 ))
 
-. $(readlink -f "$config")
+. "$(readlink -f "$config")"
 [ -n "$myfeatures" ] && features="$myfeatures"
 
 if [ -n "$list_features" ]; then
 	for dir in $features_dirs; do
-		for i in $dir/*.files $dir/*.modules; do
+		for i in "$dir"/*.files "$dir"/*.modules; do
 			[ -e "$i" ] || continue
 			file=${i##*/}
-			echo ${file%.*}
+			echo "${file%.*}"
 		done
 	done | sort -u
 	exit 0
@@ -253,18 +253,14 @@ basedir="${basedir%/}/"
 
 
 if [ -z "$nokernel" ]; then
-	[ -n "$1" ] && kernel="$1"
-	[ -z "$kernel" ] && kernel=$(uname -r)
-	kerneldir="${basedir}lib/modules/$kernel"
-
-	kflavor=${kernel##*-}
-	[ "$kflavor" = "$kernel" ] && kflavor=vanilla
-else
-	kflavor=generic
+	kver="$1"
+	[ "$1" ] || kver="$(uname -r)"
+	kernel="vmlinuz-$kver"
+	kerneldir="${basedir}lib/modules/$kver"
 fi
 
 if [ -z "$outfile" ]; then
-	outfile="${basedir}boot/initramfs-${kflavor}.img"
+	outfile="${basedir}boot/initramfs-${kver:-"generic"}.img"
 fi
 
 if [ -z "$nokernel" ] && [ ! -d "$kerneldir" ]; then
